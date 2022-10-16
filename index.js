@@ -9,10 +9,10 @@ import App from './src/App';
 import store from './src/mst/stores';
 import { name as appName } from './app.json';
 
-const masjidSuba = () => (
+const MasjidSpeaker = () => (
   <Provider store={store}>
     <App />
   </Provider>
 );
 
-AppRegistry.registerComponent(appName, () => masjidSuba);
+AppRegistry.registerComponent(appName, () => MasjidSpeaker);

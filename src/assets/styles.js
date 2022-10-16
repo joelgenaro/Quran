@@ -1,5 +1,5 @@
-import { StyleSheet, Platform } from "react-native";
-import colors from "./colors";
+import { StyleSheet, Platform } from 'react-native';
+import colors from './colors'
 const styles = {
   headerBar: {
     flex: 1,
@@ -8,9 +8,9 @@ const styles = {
   },
   centerTitle: {
     flex: 3,
-    justifyContent: "center",
-    alignItems: "center",
-    borderBottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottom: 0
   },
   cardHero: {
     flex: 1,
@@ -27,37 +27,37 @@ const styles = {
     flex: 1,
     height: 250,
     width: null,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent:'center',
   },
   menuCol: {
     padding: 5,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   menuRow: { marginTop: 20 },
   timeTitle: {
-    color: "#ffffff",
-    fontSize: 50,
+    color: '#ffffff',
+    fontSize: 50
   },
   dateTitle: {
-    color: "#ffffff",
+    color: '#ffffff',
     fontSize: 30,
-    marginTop: 15,
+    marginTop: 15
   },
   dateSubTitle: {
-    color: "#ffffff",
+    color: '#ffffff',
     fontSize: 20,
-    marginTop: 15,
+    marginTop: 15
   },
   errorTextStyle: {
     fontSize: 20,
-    alignSelf: "center",
-    color: "red",
+    alignSelf: 'center',
+    color: 'red',
   },
   cardStyle: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: 'row',
   },
   buttonStyle: {
     padding: 30,
@@ -66,54 +66,45 @@ const styles = {
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: 'rgba(0,0,0,0.3)'
   },
   overlayWhite: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.4)",
+    backgroundColor: 'rgba(255,255,255,0.4)'
   },
   heroText: {
     ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent:'center',
   },
   heroTextEvent: {
     ...StyleSheet.absoluteFillObject,
-    alignItems: "flex-start",
-    justifyContent: "center",
-    paddingLeft: 10,
+    alignItems: 'flex-start',
+    justifyContent:'center',
+    paddingLeft: 10
   },
   headerTitle: {
     fontSize: 25,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   tabs: {
-    backgroundColor: colors.primaryColor,
+    backgroundColor: colors.primaryColor
   },
   tab: {
     backgroundColor: colors.backgroundColor,
   },
   tabActive: {
     backgroundColor: colors.backgroundColor,
-    color: colors.primaryColor,
+    color: colors.primaryColor
   },
   avaNumber: {
-    fontWeight: "bold",
+    fontWeight: 'bold',
     fontSize: 20,
   },
-  txtBold: { fontSize: 15, fontWeight: "bold" },
-  txtBoldPrimary: {
-    fontSize: 16,
-    // fontWeight: "bold",
-    color: "black",
-  },
-  txtArabicBoldPrimary: {
-    fontFamily: "MeQuran",
-    fontSize: 14,
-    // fontWeight: "bold",
-    color: colors.primaryColor,
-  },
-  txtBoldLarge: { fontSize: 20, fontWeight: "bold", color: colors.grey },
+  txtBold: { fontSize: 15, fontWeight: 'bold' },
+  txtBoldPrimary: { fontSize: 15, fontWeight: 'bold', color: colors.primaryColor },
+  txtArabicBoldPrimary: { fontFamily: 'MeQuran', fontSize: 15, fontWeight: 'bold', color: colors.primaryColor },
+  txtBoldLarge: { fontSize: 20, fontWeight: 'bold', color: colors.grey },
   txtLarge: { fontSize: 20, color: colors.grey },
   leftNumber: {
     flex: 1,
@@ -121,13 +112,13 @@ const styles = {
   },
   txtArabicBold: {
     fontSize: 30,
-    color: "black",
-    fontFamily: "MeQuran",
+    color: colors.primaryColor,
+    fontFamily: 'MeQuran'
   },
   listAyah: {
     flex: 1,
     height: null,
-    marginTop: 10,
+    marginTop: 10
   },
   bismillah: {
     borderBottom: 0,
@@ -138,7 +129,7 @@ const styles = {
     paddingTop: 5,
     paddingBottom: 10,
     paddingLeft: 5,
-    paddingRight: 5,
+    paddingRight: 5
   },
   itemInput: {
     borderRadius: 10,
@@ -146,17 +137,17 @@ const styles = {
     borderBottomWidth: 0,
     borderLeftWidth: 0,
     borderRightWidth: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: 'rgba(255, 255, 255, 0.2)'
   },
   centerView: {
     flex: 1,
-    alignItems: "center",
+    alignItems: 'center',
   },
   contentForm: {
     flex: 1,
-    marginTop: Platform.OS === "ios" ? 80 : 35,
+    marginTop: Platform.OS === 'ios' ? 80 : 35,
     marginBottom: 35,
-    alignItems: "center",
+    alignItems: 'center',
     marginLeft: 0,
     marginRight: 0,
   },
@@ -164,8 +155,8 @@ const styles = {
     flex: 1,
     marginTop: 10,
     marginBottom: 35,
-    width: "100%",
-    height: undefined,
+    width: '100%',
+    height: undefined
   },
   logoImage: {
     width: 150,
@@ -179,16 +170,16 @@ const styles = {
     marginBottom: 10,
     marginLeft: 10,
     marginRight: 10,
-    borderColor: "white",
+    borderColor: 'white'
   },
   btnRounded: {
-    height: 50,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
+    height:50,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
     borderRadius: 25,
-  },
+  }
 };
 
 export default styles;

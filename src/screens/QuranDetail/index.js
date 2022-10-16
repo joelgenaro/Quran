@@ -1,14 +1,7 @@
-import React, { Component } from "react";
-import {
-  Text,
-  Alert,
-  TouchableOpacity,
-  Image,
-  ImageBackground,
-  AsyncStorage,
-} from "react-native";
-import colors from "./../../assets/colors";
-import st from "./../../assets/styles";
+import React, { Component } from 'react'
+import { Text, Alert,TouchableOpacity,Image } from 'react-native'
+import colors from './../../assets/colors'
+import st from './../../assets/styles'
 
 import {
   Container,
@@ -20,643 +13,365 @@ import {
   Body,
   Button,
   View,
-  Spinner,
-} from "native-base";
+  Spinner
+} from 'native-base'
 
-import Sound from "react-native-sound";
-import { ScrollView } from "react-native";
-import LinearGradient from "react-native-linear-gradient";
-import {
-  widthPercentageToDP as w,
-  heightPercentageToDP as h,
-} from "react-native-responsive-screen";
-import Ionicons from "react-native-vector-icons/Ionicons";
-import MaterialIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
-import {
-  AdMobBanner,
-  PublisherBanner,
-  AdMobInterstitial,
-  AdMobRewarded,
-} from "react-native-admob";
+import ArchHeader from './../../components/ArchHeader'
+
+import * as quranService from './../../services/quran'
+import { FlatList } from 'react-native-gesture-handler'
+import Sound from 'react-native-sound';
+
+const audioTests = [
+  {
+    title: 'mp3 in bundle',
+    url: 'https://download.quranicaudio.com/quran/abdullaah_basfar/001.mp3',
+    basePath: Sound.MAIN_BUNDLE,
+    img:'https://cdn.islamic.network/quran/images/2_1.png'
+  },
+];
+
 function setTestState(testInfo, component, status) {
-  component.setState({
-    tests: { ...component.state.tests, [testInfo.title]: status },
-  });
+  component.setState({tests: {...component.state.tests, [testInfo.title]: status}});
+}
+
+/**
+ * Generic play function for majority of tests
+ */
+function playSound(testInfo, component) {
+  setTestState(testInfo, component, 'pending');
+
+  const callback = (error, sound) => {
+    if (error) {
+      Alert.alert('error', error.message);
+      setTestState(testInfo, component, 'fail');
+      return;
+    }
+    setTestState(testInfo, component, 'playing');
+    // Run optional pre-play callback
+    testInfo.onPrepared && testInfo.onPrepared(sound, component);
+    sound.play(() => {
+      // Success counts as getting to the end
+      setTestState(testInfo, component, 'win');
+      // Release when it's done so we're not using up resources
+      sound.release();
+    });
+  };
+
+  // If the audio is a 'require' then the second parameter must be the callback.
+  if (testInfo.isRequire) {
+    const sound = new Sound(testInfo.url, error => callback(error, sound));
+  } else {
+    const sound = new Sound(testInfo.url, testInfo.basePath, error => callback(error, sound));
+  }
 }
 
 class QuranDetail extends Component {
   constructor(props) {
     super(props);
-    this.page = 0;
-    this.pageX = 0;
+    this.page = 0
+    this.pageX = 0
 
-    Sound.setCategory("Playback", true);
+    Sound.setCategory('Playback', true); // true = mixWithOthers
+
+    // Special case for stopping
     this.stopSoundLooped = () => {
-      console.log("Stop");
+      console.log('Stop')
       if (!this.state.loopingSound) {
         return;
       }
+
       this.state.loopingSound.stop().release();
-      this.setState({
-        loopingSound: null,
-        tests: { ...this.state.tests, ["mp3 in bundle (looped)"]: "win" },
-      });
+      this.setState({loopingSound: null, tests: {...this.state.tests, ['mp3 in bundle (looped)']: 'win'}});
     };
+
 
     this.state = {
       isLoading: false,
       isLoadingMore: false,
       stopLoadingMore: false,
-      title: "",
+      title: '',
       ayahs: [],
-      ayahs1: [],
-      engaya: [],
       surah: {},
       page: 0,
-      tajw: "",
-      surahNo: "",
-      play: false,
+      surahNo:'1',
+      play:false,
       loopingSound: undefined,
       tests: {},
-      show: false,
-      show1: false,
-      show2: false,
-      getJuzz: false,
-      bismillah: "",
-      en: "",
-      translation: "",
-    };
-  }
-  playSound(testInfo, component) {
-    setTestState(testInfo, component, "pending");
-
-    const callback = (error, sound) => {
-      if (error) {
-        Alert.alert("error", error.message);
-        setTestState(testInfo, component, "fail");
-        return;
-      }
-      setTestState(testInfo, component, "playing");
-      testInfo.onPrepared && testInfo.onPrepared(sound, component);
-      this.setState({ loopingSound: sound });
-      sound.play(() => {
-        setTestState(testInfo, component, "win");
-        sound.release();
-      });
-    };
-
-    if (testInfo.isRequire) {
-      const sound = new Sound(testInfo.url, (error) => callback(error, sound));
-    } else {
-      const sound = new Sound(testInfo.url, testInfo.basePath, (error) =>
-        callback(error, sound)
-      );
     }
   }
 
-  componentWillUnmount() {
-    this.stopSoundLooped();
-  }
-  getTajweed = async () => {
-    const tajw = await AsyncStorage.getItem("tajweed");
-    const aaa = JSON.parse(tajw);
-    this.setState({ tajw: aaa.tajweed });
-    const tra = await AsyncStorage.getItem("value");
-    const trans = await AsyncStorage.getItem("translate");
-    const aaaa = JSON.parse(trans);
-    this.setState({ transl: aaaa.translate });
-    console.log("Translation", this.state.transl);
-    this.setState({ trans: tra });
-  };
   componentDidMount() {
-    AdMobInterstitial.requestAd(AdMobInterstitial.showAd);
-
-    this.getTajweed();
+    // console.log(this.props.route.params.surahNo)
     this.init((isSurah, surah, juz) => {
       if (isSurah) {
-        this.getAyahsFromSurah(surah.number, false);
-        var str = "" + this.props.navigation.state.params.surah.id;
-        var pad = "000";
-        var ans = pad.substring(0, pad.length - str.length) + str;
-        // console.log("Answer", ans);
-        this.setState({ surahNo: ans });
+        this.getAyahsFromSurah(surah.number, false)
+        var str = "" + surah.number
+        var pad = "000"
+        var ans = pad.substring(0, pad.length - str.length) + str
+        console.log('Answer',ans)
+        this.setState({surahNo:ans})
       } else {
-        this.getAyahsFromJuz(juz, false);
+        this.getAyahsFromJuz(juz, false)
       }
-    });
+    })
   }
 
   init = (callback) => {
-    const params = this.props.navigation.state.params;
-    // console.log("PARAMS", params);
-    if (params.isSurah === true) {
-      this.setState({ show: true });
-    }
+    const params = this.props.navigation.state.params
+    console.log('PARAMS',params)
     this.setState({
-      title: params.surah ? params.surah.englishName : "Juz " + params.juz,
+      title: params.surah ? params.surah.englishName : 'Juz ' + params.juz,
       surah: params.surah,
       juz: params.juz,
-    });
+    })
 
-    callback(params.isSurah, params.surah, params.juz);
-  };
+    callback(params.isSurah, params.surah, params.juz)
+  }
 
   getAyahsFromJuz = (number, isLoadingMore) => {
-    // console.log("request send");
-    fetch(
-      "https://api.alquran.cloud/v1/juz/" +
-        this.props.navigation.state.params.juz +
-        "/ar.asad"
-    )
-      .then((res) => res.json())
-      .then((response) => {
-        var items = [];
-        fetch(
-          "https://api.alquran.cloud/v1/juz/" +
-            this.props.navigation.state.params.juz +
-            "/en.asad"
-        )
-          .then((res2) => res2.json())
-          .then((response2) => {
-            fetch(
-              "https://api.quran.com/api/v4/verses/by_juz/" +
-                this.props.navigation.state.params.juz +
-                "?language=en&words=true&page=&per_page=50"
-            )
-              .then((res3) => res3.json())
-              .then((response3) => {
-                for (var i = 0; i < response3.verses.length; i++) {
-                  items.push({
-                    ArabicText: response.data.ayahs[i].text,
-                    EnglishText: response2.data.ayahs[i].text,
-                    RomanText: response3.verses[i].words,
-                  });
-                  console.log("ArabText", response.data.ayahs[i].text);
-                  // console.log(response3.verses.length);
-                }
+    console.log('request send')
+    // this.setState({ isLoading: true })
+    let formdata = new FormData()
+    fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?juz_number=${this.props.navigation.state.params.juz}`, {
+        method: 'GET',
+    })
+        .then((response) => response.json())
 
-                this.setState({ ayahs: items });
-              })
-              .then(() => {});
-          })
-          .then(() => {});
-      });
-  };
+        .then((responsejosn) => {
+            console.log('Response',responsejosn)
+            this.setState({ ayahs: responsejosn.verses})
+            this.setState({ isLoading: false})
+        })
+
+    // if (isLoadingMore) { this.setState({ isLoadingMore: true}) } else { this.setState({ isLoading: true}) }
+
+    // const offset = this.page
+    // const pageX = this.pageX
+    // const limit = 10
+    // quranService.getAyahFromJuz(number, pageX, limit).then(res => {
+    //   const ayahResult = res.data
+      
+    //   if (ayahResult.code === 200) {
+    //     const ayahs = ayahResult.data.ayahs
+        
+    //     let ayahWithTranslations = []
+    //       ayahs.map((ayah, index) => {
+    //         let ayahWithTranslation = {}
+    //         ayahWithTranslation.numberInSurah = ayah.number
+    //         ayahWithTranslation.textArabic = ayah.text
+    //         ayahWithTranslation.translation = ''
+    //         ayahWithTranslations.push(ayahWithTranslation)
+    //       })
+
+    //       if (ayahWithTranslations.length === 0) this.setState({ stopLoadingMore: true })
+    //       this.setState({ ayahs: [...this.state.ayahs, ...ayahWithTranslations] })
+    //   } else {
+    //     Alert.alert('Error', res.status)
+    //   }
+
+    //   this.setState({ isLoading: false})
+    // })
+  }
 
   getAyahsFromSurah = (number, isLoadingMore) => {
-    // console.log("request send");
+    // if (isLoadingMore) { this.setState({ isLoadingMore: true}) } else { this.setState({ isLoading: true}) }
+    console.log('request send')
+    // this.setState({ isLoading: true })
+    let formdata = new FormData()
+    fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${this.props.navigation.state.params.surah.id}`, {
+        method: 'GET',
+    })
+        .then((response) => response.json())
 
-    fetch(
-      `https://api.quran.sutanlab.id/surah/${
-        this.props.navigation.state.params.surah.id
-      }`,
-      {
-        method: "GET",
-      }
-    )
-      .then((response) => response.json())
+        .then((responsejosn) => {
+            console.log('Response',responsejosn)
+            this.setState({ ayahs: responsejosn.verses})
+            this.setState({ isLoading: false})
+        })
+    
+    // const offset = this.page
+    // const pageX = this.pageX
+    // const limit = 10
+    // quranService.getAyahFromSurahID(number, pageX, limit).then(res => {
+    //   const ayahResult = res.data
+    //   quranService.getTranslationFromSurah(number, pageX, limit).then(res => {
+    //     const transResult = res.data
 
-      .then((responsejosn) => {
-        // console.log("Response", responsejosn.data.preBismillah);
-        this.setState({
-          ayahs: responsejosn.data.verses,
-        });
+    //     if (transResult.code === 200) {
+    //       let ayahs = ayahResult.data
+    //       let translations = transResult.data.ayahs
 
-        if (responsejosn.data.preBismillah !== null) {
-          this.setState({
-            ayahs: responsejosn.data.verses,
-            bismillah: responsejosn.data.preBismillah.text.arab,
-            en: responsejosn.data.preBismillah.text.transliteration.en,
-            translation: responsejosn.data.preBismillah.translation.en,
-          });
-        }
-        this.setState({ isLoading: false });
-        console.log("state", JSON.stringify(this.state.ayahs, null, 2));
-      });
-  };
+    //       let ayahWithTranslations = []
+    //       ayahs.map((ayah, index) => {
+    //         let ayahWithTranslation = {}
+    //         ayahWithTranslation.numberInSurah = ayah.aya_number
+    //         ayahWithTranslation.textArabic = ayah.aya_text
+    //         ayahWithTranslation.translation = translations[index].text
+    //         ayahWithTranslations.push(ayahWithTranslation)
+    //       })
+          
+    //       if (ayahWithTranslations.length === 0) this.setState({ stopLoadingMore: true })
+    //       this.setState({ ayahs: [...this.state.ayahs, ...ayahWithTranslations] })
+    //     } else {
+    //       Alert.alert('Error', response.status)
+    //     }
 
-  getTranslation = () => {
-    console.log("request send");
-    let formdata = new FormData();
-    fetch(
-      `https://api.alquran.cloud/v1/surah/${
-        this.props.navigation.state.params.surah.id
-      }/en.asad`,
-      {
-        method: "GET",
-      }
-    )
-      .then((response) => response.json())
+    //     this.setState({ isLoading: false, isLoadingMore: false})
+    //   })
+    // }).catch(error => {
+    //   if (!error.status) {
+    //     Alert.alert('Error', 'Network Error')
+    //   }
+      
+    //   this.setState({ isLoading: false})
+    // })
+  }
 
-      .then((responsejosn) => {
-        this.setState({ ayahs1: responsejosn.data.ayahs });
-        this.setState({ isLoading: false });
-      });
-  };
   _handleLoadMore = () => {
     if (this.state.stopLoadingMore) {
-      return null;
+      return null
     }
 
-    this.page = this.page + 1;
-    this.pageX = this.pageX + 10;
+    this.page = this.page + 1
+    this.pageX = this.pageX + 10
     this.setState({
       isLoadingMore: true,
-    });
-
+    })
+    
     this.init((isSurah, surah, juz) => {
       if (isSurah) {
-        this.getAyahsFromSurah(surah.number, true);
+        this.getAyahsFromSurah(surah.number, true)
       } else {
-        this.getAyahsFromJuz(juz, true);
+        this.getAyahsFromJuz(juz, true)
       }
-    });
-  };
+    })
+  }
 
   render() {
-    const bismillah = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم";
-    const en = "Bismi Allahi alrrahmani alrraheemi";
-    const translation =
-      "In the name of Allah, the Entirely Merciful, the Especially Merciful";
-    const surat = "سورۃ  ";
+    const bismillah = 'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم'
+    console.log('SuraNo',this.state.surahNo)
     const getFooter = () => {
-      if (!this.state.isLoadingMore) return null;
+      if (!this.state.isLoadingMore) return null
 
-      return <Spinner color={colors.primaryColor} />;
-    };
+      return <Spinner color={colors.primaryColor} />
+    }
     const audio = [
       {
-        url: `https://download.quranicaudio.com/quran/abdullaah_basfar/${
-          this.state.surahNo
-        }.mp3`,
+        url: `https://download.quranicaudio.com/quran/abdullaah_basfar/${this.state.surahNo}.mp3`,
       },
-    ];
+    ]
 
     return (
       <Container>
-        <LinearGradient
-          colors={["#02967c", "#049e6a", "#06a558"]}
-          style={{
-            height: h("12%"),
-            width: "100%",
-            alignItems: "center",
-            justifyContent: "flex-end",
-          }}
-        >
-          {this.state.show === true ? (
-            <Text
-              style={{
-                color: "#fff",
-                fontWeight: "bold",
-                fontSize: 20,
-                marginBottom: h("2%"),
-              }}
-            >
-              {this.props.navigation.state.params.surah.name_simple}
-            </Text>
-          ) : (
-            <Text
-              style={{
-                color: "#fff",
-                fontWeight: "bold",
-                fontSize: 20,
-                marginBottom: h("2%"),
-              }}
-            >
-              Juzz {this.props.navigation.state.params.juz}
-            </Text>
-          )}
-        </LinearGradient>
-        <View
-          style={{
-            backgroundColor: colors.backgroundColor,
-            width: "100%",
-            height: "100%",
-          }}
-        >
-          <ImageBackground
-            source={require("../../assets/images/bg.png")}
-            style={{ width: "100%", height: 136 }}
-          >
-            {this.state.surah && this.state.surah.number != 1 && (
-              <View
-                style={{
-                  flexDirection: "column",
-                  padding: 10,
-                  alignItems: "center",
-                  alignContent: "center",
-                }}
-              >
-                {this.state.show === true ? (
-                  <Text style={st.txtArabicBold}>
-                    {surat}{" "}
-                    {this.props.navigation.state.params.surah.name_arabic}
-                  </Text>
-                ) : null}
-                <Text style={{ fontSize: 18 }}>{bismillah}</Text>
-                <Text style={{ fontSize: 15, color: "black", marginTop: "3%" }}>
-                  {en}
-                </Text>
-              </View>
-            )}
-          </ImageBackground>
+        <ArchHeader title={this.state.title} isLoading={this.state.isLoading} />
+        <View style={{ backgroundColor: colors.backgroundColor, marginTop: 10, width:'100%', height:'100%' }}>
+          {this.state.surah && this.state.surah.number != 1 &&
+            <View style={{
+              flexDirection: 'column',
+              padding: 10,
+              alignItems: 'center',
+              alignContent: 'center',
+            }}>
+              <Text style={st.txtArabicBold}>{bismillah}</Text>
+            </View>
+          }
 
-          {!(this.state.isLoadingMore && this.state.isLoading) &&
-          this.state.ayahs.length != 0 ? (
-            <View
-              style={{
-                height: "100%",
-              }}
+          {(!(this.state.isLoadingMore && this.state.isLoading) && this.state.ayahs.length != 0) ? (
+            <View style={{height:'100%',
+            // backgroundColor:'#ada'
+            }}
             >
-              <View style={{ height: "90%" }}>
-                {this.state.surahNo === "" ? (
-                  <ScrollView style={{ marginBottom: h("15%") }}>
-                    {this.state.ayahs.map((item, i) => {
-                      return (
-                        <View style={{ padding: 20 }} key={i}>
-                          <View
-                            style={{
-                              flexDirection: "row",
-                              justifyContent: "space-between",
-                            }}
-                          >
-                            <TouchableOpacity
-                              onPress={() => {
-                                this.setState(
-                                  { show1: item, show2: true },
-                                  () => {}
-                                );
-                              }}
-                              style={{
-                                marginLeft: -h("3%"),
-                                width: "20%",
-                              }}
-                            >
-                              <Image
-                                source={require("../../assets/share.png")}
-                                style={{
-                                  height: h("3%"),
-                                  width: "80%",
-                                  resizeMode: "contain",
-                                }}
-                              />
-                            </TouchableOpacity>
-                            <Text
-                              style={{
-                                fontSize: 30,
-                                fontWeight: "bold",
-                                width: "86%",
-                              }}
-                            >
-                              {item.ArabicText}
-                            </Text>
-                          </View>
-                          <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                          >
-                            {item.RomanText.map((res) => {
-                              return (
-                                <View>
-                                  <Text
-                                    style={{ fontSize: 15, marginTop: h("2%") }}
-                                  >
-                                    {res.transliteration.text}
-                                  </Text>
-                                </View>
-                              );
-                            })}
-                          </ScrollView>
-                          {/* <Text style={{ fontSize: 15, marginTop: h("1%") }}>
-                            {item.EnglishText}
-                          </Text> */}
-                        </View>
-                      );
-                    })}
-                  </ScrollView>
-                ) : (
-                  <ScrollView style={{ marginBottom: h("25%") }}>
-                    {this.state.ayahs.map((item, i) => {
-                      return (
-                        <View style={{ padding: 20 }} key={i}>
-                          <View
-                            style={{
-                              flexDirection: "row",
-                              justifyContent: "space-between",
-                            }}
-                          >
-                            <TouchableOpacity
-                              onPress={() => {
-                                this.setState(
-                                  { show1: item, show2: true },
-                                  () => {
-                                    console.log("SHOW", this.state.show1);
-                                  }
-                                );
-                              }}
-                              style={{
-                                marginLeft: -h("3%"),
-                                width: "20%",
-                              }}
-                            >
-                              <Image
-                                source={require("../../assets/share.png")}
-                                style={{
-                                  height: h("3%"),
-                                  width: "80%",
-                                  resizeMode: "contain",
-                                }}
-                              />
-                            </TouchableOpacity>
-                            <Text
-                              style={{
-                                fontSize: 21,
-                                color: "black",
-                                width: "74%",
-                                marginRight: "4%",
-                              }}
-                            >
-                              {item.text.arab}
-                            </Text>
-
-                            <ImageBackground
-                              source={require("../../assets/images/circle.png")}
-                              style={{
-                                height: 38,
-                                width: 38,
-                                justifyContent: "center",
-                                alignItems: "center",
-                              }}
-                            >
-                              <Text
-                                style={{ textAlign: "center", fontSize: 12 }}
-                              >
-                                {i + 1}
-                              </Text>
-                            </ImageBackground>
-                          </View>
-                          <View>
-                            {this.state.tajw ? (
-                              <Text
-                                style={{ fontSize: 15, marginTop: h("1%") }}
-                              >
-                                {item.text.transliteration.en}
-                              </Text>
-                            ) : null}
-                            {this.state.transl == true ? (
-                              <Text
-                                style={{ fontSize: 15, marginTop: h("1%") }}
-                              >
-                                {item.translation.en}
-                              </Text>
-                            ) : null}
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </ScrollView>
-                )}
-              </View>
-              <View
-                style={{
-                  height: "10%",
-                  width: "100%",
-                  marginTop: -200,
-                  alignItems: "flex-end",
-                }}
-              >
-                {this.state.show2 !== false ? (
-                  <View
-                    style={{
-                      height: h("7%"),
-                      width: "100%",
-                      alignItems: "center",
-                      marginTop: -h("10%"),
-                    }}
-                  >
-                    <TouchableOpacity
-                      onPress={() => {
-                        this.setState({ show2: false }, () => {
-                          this.props.navigation.navigate("ImageScreen", {
-                            item: this.state.show1.text.transliteration.en,
-                            arabic: this.state.show1.text.arab,
-                            translation: this.state.show1.translation.en,
-                          });
-                        });
-                      }}
-                      style={{
-                        height: h("7%"),
-                        width: "90%",
-                        backgroundColor: "#07A851",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderRadius: h("1%"),
-                      }}
-                    >
-                      <Text style={{ fontSize: 20, color: "#fff" }}>
-                        Share Image
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => {
-                        this.setState({ show2: false }, () => {
-                          this.props.navigation.navigate("Editor", {
-                            item: this.state.show1.text.transliteration.en,
-                            arabic: this.state.show1.text.arab,
-                            translation: this.state.show1.translation.en,
-                          });
-                        });
-                      }}
-                      style={{
-                        height: h("7%"),
-                        width: "90%",
-                        backgroundColor: "#07A851",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginTop: h("1%"),
-                        borderRadius: h("1%"),
-                      }}
-                    >
-                      <Text style={{ fontSize: 20, color: "#fff" }}>
-                        Share Text
-                      </Text>
-                    </TouchableOpacity>
+            <View style={{height:'90%'}}>
+            <FlatList
+              data={this.state.ayahs}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({item, index}) => (
+                <View style={{
+                  flexDirection: 'row',
+                  padding: 20,
+                  alignItems: 'center',
+                }}>
+                  <View style={{ width: '10%' }}>
+                    <Button transparent>
+                      <Text style={{ color: colors.grey }}>{item.verse_key}</Text>
+                    </Button>
                   </View>
-                ) : null}
-                {audio.map((testInfo) => {
-                  return (
-                    <View
-                      style={{
-                        height: "100%",
-                        width: "50%",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {this.state.play === false ? (
-                        <TouchableOpacity
-                          onPress={() => {
-                            this.setState({ play: true }, () => {
-                              this.playSound(testInfo, this);
-                            });
-                          }}
-                          style={{
-                            height: "100%",
-                            marginBottom: 60,
-                            width: "50%",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <AntDesign
-                            name="play"
-                            size={50}
-                            color="#07A851"
-                            style={{
-                              backgroundColor: "white",
-                              borderRadius: 60,
-                            }}
-                          />
-                        </TouchableOpacity>
-                      ) : (
-                        <TouchableOpacity
-                          onPress={() => {
-                            this.setState({ play: false });
-                          }}
-                          onPressIn={this.stopSoundLooped}
-                          style={{
-                            height: "100%",
-                            width: "50%",
-                            marginBottom: 60,
-
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <AntDesign
-                            name="pausecircle"
-                            size={50}
-                            color="#07A851"
-                            style={{
-                              backgroundColor: "white",
-                              borderRadius: 60,
-                            }}
-                          />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  );
-                })}
+                  <View style={{width: '90%'}}>
+                    <Text style={st.txtArabicBold}>{item.text_uthmani}</Text>
+                    <Text note>{item.translation}</Text>
+                  </View>
+                </View>
+              )}
+              // onEndReachedThreshold={0.4}
+              // onEndReached={() => this._handleLoadMore()}
+              // ListFooterComponent={() => getFooter()}
+            />
+            </View>
+              <View
+            style={{
+              height:'10%',
+              width:'100%',
+              // backgroundColor:'#0003',
+              marginTop:-200,
+              alignItems:'flex-end'
+            }}
+            >
+            {audio.map(testInfo => {
+            return (
+              <View
+                style={{
+                  height:'100%',
+                  width:'50%',
+                  // backgroundColor:'#ada',
+                  alignItems:'center',
+                  justifyContent:'center'
+                }}
+              >
+              {this.state.play === false ? (
+              <TouchableOpacity
+              onPress={() => {
+                this.setState({play:true},()=> {
+                  return playSound(testInfo, this)
+                  })
+                }}
+                style={{
+                  height:'100%',
+                  width:'50%',
+                  // backgroundColor:'#ada',
+                  alignItems:'center',
+                  justifyContent:'center'
+                }}
+              >
+                <Image style={{height:'200%',width:'100%'}} source={require('../../assets/play.png')}/>
+              </TouchableOpacity>
+              ) : 
+              <TouchableOpacity
+                onPress={this.stopSoundLooped}
+                style={{
+                  height:'100%',
+                  width:'50%',
+                  // backgroundColor:'#ada',
+                  alignItems:'center',
+                  justifyContent:'center'
+                }}
+              >
+              {/* <Text>Hello</Text> */}
+                <Image style={{height:'200%',width:'100%'}} source={require('../../assets/play.png')}/>
+              </TouchableOpacity>
+              }
               </View>
+            );
+          })}
+            </View>
             </View>
           ) : (
             <Spinner color={colors.primaryColor} />
-          )}
+          )} 
         </View>
       </Container>
     );
   }
 }
 
-export default QuranDetail;
+export default QuranDetail

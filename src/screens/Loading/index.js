@@ -19,10 +19,10 @@ class LoadingScreen extends Component {
       revelationType: 'Medinan'
     }
 
-    // auth().onAuthStateChanged(user => {
-      this.props.navigation.navigate('MainStack');
+    auth().onAuthStateChanged(user => {
+      this.props.navigation.navigate(user ? 'MainStack' : 'MainStack');
       // this.props.navigation.navigate(user ? 'LoginStack' : 'MainStack'); //-- MainStack
-    // });
+    });
   }
 
   render() {

@@ -1,20 +1,24 @@
-import React, { Component } from "react";
-import { View, Text, Alert } from "react-native";
-import colors from "./../../assets/colors";
-import st from "./../../assets/styles";
+import React, { Component } from 'react'
+import { View, Text, Alert } from 'react-native'
+import colors from './../../assets/colors'
+import st from './../../assets/styles'
 
-import { Container, Content } from "native-base";
+import {
+  Container,
+  Content,
+} from 'native-base'
 // import WaveForm from 'react-native-audiowaveform'
 
-import ArchHeader from "./../../components/ArchHeader";
+import ArchHeader from './../../components/ArchHeader'
 
 class Event extends Component {
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       isLoading: false,
-    };
+    }
   }
+
   render() {
     return (
       <Container>
@@ -31,4 +35,4 @@ class Event extends Component {
   }
 }
 
-export default Event;
+export default Event

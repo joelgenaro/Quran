@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { Component } from "react";
+import React, {Component} from 'react';
 import {
   View,
   Text,
@@ -7,407 +7,222 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
-} from "react-native";
+} from 'react-native';
 
 import {
   widthPercentageToDP as w,
   heightPercentageToDP as h,
-} from "react-native-responsive-screen";
-import colors from "../../assets/colors";
-import { AdMobInterstitial } from "react-native-admob";
-
-import LinearGradient from "react-native-linear-gradient";
-import CategoryButton from "../../components/Category";
-import AllItems from "./AllItems";
-import HomeAndFamily from "./HomeandFamily";
-import FoodAndDrink from "./FoodandDrink";
-import MorningandEvening from "./MorningandEvening";
-import firestore from "@react-native-firebase/firestore";
+} from 'react-native-responsive-screen';
+import LinearGradient from 'react-native-linear-gradient';
 
 export class Dua extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      selectedState: "All",
-      verticalData: [],
+  state = {
+    verticalData: [
+      // {
+      //   email: 'study@g.com study@g.com study@g.com study@g.com study@g.com',
+      //   name: 'After Prayers',
+      //   time: '12:00 PM',
+      //   img: require('../../assets/Dua/AfterprayersDua.jpg'),
+      //   clr: '#faf',
+      // },
+      // {
+      //   email: 'new@g.com',
+      //   name: 'Daily Dhikr',
+      //   time: '01:00 AM',
+      //   img: require('../../assets/Dua/DailyDhikrDua.jpg'),
+      //   clr: '#f22',
+      // },
+      // {
+      //   email: 'Monday@g.com',
+      //   name: 'Faith ',
+      //   time: '12:46 AM',
+      //   img: require('../../assets/Dua/Faithdua.jpg'),
+      //   clr: '#aaf',
+      // },
+      // {
+      //   email: 'Monday@g.com',
+      //   name: 'Family',
+      //   time: '12:46 AM',
+      //   img: require('../../assets/Dua/FamilyDua.jpg'),
+      //   clr: '#aaf',
+      // },
+      // {
+      //   email: 'Monday@g.com',
+      //   name: 'Garment',
+      //   time: '12:46 AM',
+      //   img: require('../../assets/Dua/Garmentdua.jpg'),
+      //   clr: '#aaf',
+      // },
+      // {
+      //   email: 'Monday@g.com',
+      //   name: 'Health',
+      //   time: '12:46 AM',
+      //   img: require('../../assets/Dua/Healthdua.jpg'),
+      //   clr: '#aaf',
+      // },
+      // {
+      //   email: 'Monday@g.com',
+      //   name: 'Home Entering and Leaving',
+      //   time: '12:46 AM',
+      //   img: require('../../assets/Dua/HomeEnteringandLeavingdua.jpg'),
+      //   clr: '#aaf',
+      // },
+      // {
+      //   email: 'Monday@g.com',
+      //   name: 'Knowledge',
+      //   time: '12:46 AM',
+      //   img: require('../../assets/Dua/Knowledgedua.jpg'),
+      //   clr: '#aaf',
+      // },
+      // {
+      //   email: 'Monday@g.com',
+      //   name: 'Mosque Entering',
+      //   time: '12:46 AM',
+      //   img: require('../../assets/Dua/MosqueEnteringDua.jpg'),
+      //   clr: '#aaf',
+      // },
+      // {
+      //   email: 'Monday@g.com',
+      //   name: 'Mosque Exiting',
+      //   time: '12:46 AM',
+      //   img: require('../../assets/Dua/MosqueExitingDua.jpg'),
+      //   clr: '#aaf',
+      // },
+      // {
+      //   email: 'Monday@g.com',
+      //   name: 'Sleeping',
+      //   time: '12:46 AM',
+      //   img: require('../../assets/Dua/Sleepingdua.jpg'),
+      //   clr: '#aaf',
+      // },
+      // {
+      //   email: 'Monday@g.com',
+      //   name: 'Toilet Entering',
+      //   time: '12:46 AM',
+      //   img: require('../../assets/Dua/ToiletDu(Entering).jpg'),
+      //   clr: '#aaf',
+      // },
+      // {
+      //   email: 'Monday@g.com',
+      //   name: 'toilet leaving',
+      //   time: '12:46 AM',
+      //   img: require('../../assets/Dua/toiletdua(leaving).jpg'),
+      //   clr: '#aaf',
+      // },
+    ],
 
-      foodData: [],
-      selected: "First",
-      homeData: [],
-      morningData: [],
-    };
-  }
+    cart: [],
+    selected: 'First',
+
+    refreshing: false,
+  };
+
   componentDidMount() {
-    AdMobInterstitial.requestAd(AdMobInterstitial.showAd);
+    fetch("https://islamiapp.herokuapp.com/api/duas")
+        .then(res => res.json())
+        .then(response => {
+            this.setState({
+              verticalData: response.apiData,
+                fetched: true
+            })
+            console.log(response)
+        })
+}
 
-    this.getAll();
-    this.getFood();
-    this.getMorning();
-    this.getHome();
-  }
-  onPressAll = () => {
-    this.setState({ selectedState: "All", screenCondition: "All" });
+  // Vertical
+  renderItemDesign = (item, index) => (
+    <TouchableOpacity
+      delayPressIn={0}
+      onPress={() => this.navToShow(item)}
+      // onPress={() => {
+      //   this.removeByIndex(item);
+      // }}
+    //   onPress={() => {
+    //     this.add(item);
+    //   }}
+      style={{
+        backgroundColor: '#fff',
+        height: h('7%'),
+        marginBottom: h('1%'),
+        // alignItems: 'center',
+        // justifyContent: 'center',
+        borderWidth: h('0.1'),
+        borderColor: '#0004',
+        borderRadius: h('1'),
+        flexDirection: 'row',
+      }}>
+      {/* Center view */}
+      <View
+        style={{
+          height: '100%',
+          width: '100%',
+          // backgroundColor: '#aaf',
+          justifyContent: 'center',
+          marginLeft:h('3')
+        //   alignItems:'center'
+        }}>
+        <Text
+          style={{
+            color: '#0009',
+            fontSize: h('2.7%'),
+          }}>
+          {item.nameOfDua}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  // navigate to show screen
+  navToShow = (item) => {
+    this.props.navigation.navigate('ShowItem', {
+      navProps: item,
+    });
   };
-  onPressHF = () => {
-    this.setState({ selectedState: "HF", screenCondition: "HF" });
-  };
-  onPressFD = () => {
-    this.setState({ selectedState: "FD", screenCondition: "FD" });
-  };
-  onPressME = () => {
-    this.setState({ selectedState: "ME", screenCondition: "ME" });
-  };
-  getAll = async () => {
-    await firestore()
-      .collection("Duas")
-      .onSnapshot((d) => {
-        this.setState({ verticalData: d._docs });
-        // setResponseArray(data);
+
+
+  refresh = () => {
+    this.setState({refreshing: true});
+
+    setTimeout(() => {
+      this.setState({refreshing: false}, () => {
+        console.warn('All done');
       });
-  };
-  getFood = async () => {
-    await firestore()
-      .collection("Duas")
-      .where("category", "==", "FD")
-      .onSnapshot((d) => {
-        this.setState({ foodData: d._docs });
-      });
-  };
-  getMorning = async () => {
-    await firestore()
-      .collection("Duas")
-      .where("category", "==", "ME")
-      .onSnapshot((d) => {
-        this.setState({ morningData: d._docs });
-      });
-  };
-  getHome = async () => {
-    await firestore()
-      .collection("Duas")
-      .where("category", "==", "HF")
-      .onSnapshot((d) => {
-        this.setState({ homeData: d._docs });
-      });
+    }, 3000);
   };
 
   render() {
-    const Data = [
-      {
-        id: "1",
-        title: "All",
-        onPress: this.onPressAll,
-      },
-      {
-        id: "2",
-        title: "Home and Family",
-        onPress: this.onPressHF,
-      },
-      {
-        id: "3",
-        title: "Morning and Evening",
-        onPress: this.onPressME,
-      },
-      {
-        id: "4",
-        title: "Food and Drink",
-        onPress: this.onPressFD,
-      },
-    ];
-
     return (
       <View
         style={{
           flex: 1,
-        }}
-      >
+        }}>
         <SafeAreaView />
-        <LinearGradient
-          colors={["#02967c", "#049e6a", "#06a558"]}
-          style={{
-            height: h("12%"),
-            width: "100%",
-            // backgroundColor:'#00918A',
-            alignItems: "center",
-            justifyContent: "flex-end",
-          }}
-        >
-          <Text
+        <LinearGradient colors={['#02967c', '#049e6a', '#06a558']} 
             style={{
-              color: "#fff",
-              fontWeight: "bold",
-              fontSize: 20,
-              marginBottom: h("2%"),
-            }}
-          >
-            Dua
-          </Text>
-        </LinearGradient>
-
+            height:h('12%'),
+            width:'100%',
+            // backgroundColor:'#00918A',
+            alignItems:'center',
+            justifyContent:'flex-end'
+        }}
+        >
+            <Text style={{color:'#fff',fontWeight:'bold',fontSize:20,marginBottom:h('2%')}}>
+                Duas
+            </Text>
+            </LinearGradient>
         <View
           style={{
-            margin: h("1%"),
+            margin: h('1%'),
             flex: 1,
-          }}
-        >
-          <View style={{ marginBottom: h("2%") }}>
-            <FlatList
-              data={Data}
-              renderItem={({ item }) => (
-                <CategoryButton title={item.title} OnPress={item.onPress} />
-              )}
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}
-            />
-          </View>
-          {this.state.selectedState == "All" ? (
-            <View
-              style={{
-                margin: h("1%"),
-                flex: 1,
-              }}
-            >
-              <FlatList
-                data={this.state.verticalData}
-                showsHorizontalScrollIndicator={false}
-                numColumns={2}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <View>
-                    <TouchableOpacity
-                      // delayPressIn={0}
-                      onPress={() =>
-                        this.props.navigation.navigate("ShowItem", {
-                          navProps: item,
-                        })
-                      }
-                      style={{
-                        backgroundColor: "#fff",
-                        height: h("7%"),
-                        marginBottom: h("1%"),
-                        borderBottomWidth: 0.2,
-                        borderBottomColor: colors.primaryColor,
-                        borderRadius: h("1"),
-                        flexDirection: "row",
-                      }}
-                    >
-                      {/* Center view */}
-                      <View
-                        style={{
-                          height: "100%",
-                          width: "90%",
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          // backgroundColor: '#aaf',
-                          // justifyContent: "center",
-                          marginLeft: h("3"),
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: "#0009",
-                            fontSize: h("2.3%"),
-                          }}
-                        >
-                          {item["_data"].nameOfDua}
-                        </Text>
-                        <Image
-                          source={require("../../assets/right.png")}
-                          style={{ height: 15, width: 9 }}
-                        />
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              />
-            </View>
-          ) : this.state.selectedState == "HF" ? (
-            <View
-              style={{
-                margin: h("1%"),
-                flex: 1,
-              }}
-            >
-              <FlatList
-                data={this.state.homeData}
-                showsHorizontalScrollIndicator={false}
-                numColumns={2}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <View>
-                    <TouchableOpacity
-                      // delayPressIn={0}
-                      onPress={() =>
-                        this.props.navigation.navigate("ShowItem", {
-                          navProps: item,
-                        })
-                      }
-                      style={{
-                        backgroundColor: "#fff",
-                        height: h("7%"),
-                        marginBottom: h("1%"),
-                        borderBottomWidth: 0.2,
-                        borderBottomColor: colors.primaryColor,
-                        borderRadius: h("1"),
-                        flexDirection: "row",
-                      }}
-                    >
-                      {/* Center view */}
-                      <View
-                        style={{
-                          height: "100%",
-                          width: "90%",
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          // backgroundColor: '#aaf',
-                          // justifyContent: "center",
-                          marginLeft: h("3"),
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: "#0009",
-                            fontSize: h("2.3%"),
-                          }}
-                        >
-                          {item["_data"].nameOfDua}
-                        </Text>
-                        <Image
-                          source={require("../../assets/right.png")}
-                          style={{ height: 15, width: 9 }}
-                        />
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              />
-            </View>
-          ) : this.state.selectedState == "FD" ? (
-            <View
-              style={{
-                margin: h("1%"),
-                flex: 1,
-              }}
-            >
-              <FlatList
-                data={this.state.foodData}
-                showsHorizontalScrollIndicator={false}
-                numColumns={2}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <View>
-                    <TouchableOpacity
-                      // delayPressIn={0}
-                      onPress={() =>
-                        this.props.navigation.navigate("ShowItem", {
-                          navProps: item,
-                        })
-                      }
-                      style={{
-                        backgroundColor: "#fff",
-                        height: h("7%"),
-                        marginBottom: h("1%"),
-                        borderBottomWidth: 0.2,
-                        borderBottomColor: colors.primaryColor,
-                        borderRadius: h("1"),
-                        flexDirection: "row",
-                      }}
-                    >
-                      {/* Center view */}
-                      <View
-                        style={{
-                          height: "100%",
-                          width: "90%",
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          // backgroundColor: '#aaf',
-                          // justifyContent: "center",
-                          marginLeft: h("3"),
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: "#0009",
-                            fontSize: h("2.3%"),
-                          }}
-                        >
-                          {item["_data"].nameOfDua}
-                        </Text>
-                        <Image
-                          source={require("../../assets/right.png")}
-                          style={{ height: 15, width: 9 }}
-                        />
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              />
-            </View>
-          ) : (
-            <View
-              style={{
-                margin: h("1%"),
-                flex: 1,
-              }}
-            >
-              <FlatList
-                data={this.state.morningData}
-                showsHorizontalScrollIndicator={false}
-                numColumns={2}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <View>
-                    <TouchableOpacity
-                      // delayPressIn={0}
-                      onPress={() =>
-                        this.props.navigation.navigate("ShowItem", {
-                          navProps: item,
-                        })
-                      }
-                      style={{
-                        backgroundColor: "#fff",
-                        height: h("7%"),
-                        marginBottom: h("1%"),
-                        borderBottomWidth: 0.2,
-                        borderBottomColor: colors.primaryColor,
-                        borderRadius: h("1"),
-                        flexDirection: "row",
-                      }}
-                    >
-                      {/* Center view */}
-                      <View
-                        style={{
-                          height: "100%",
-                          width: "90%",
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          // backgroundColor: '#aaf',
-                          // justifyContent: "center",
-                          marginLeft: h("3"),
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: "#0009",
-                            fontSize: h("2.3%"),
-                          }}
-                        >
-                          {item["_data"].nameOfDua}
-                        </Text>
-                        <Image
-                          source={require("../../assets/right.png")}
-                          style={{ height: 15, width: 9 }}
-                        />
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              />
-            </View>
-          )}
+          }}>
+          <FlatList
+            data={this.state.verticalData}
+            renderItem={({item, index}) => this.renderItemDesign(item, index)}
+            keyExtractor={(item) => item.name}
+            showsVerticalScrollIndicator={false}
+            refreshing={this.state.refreshing}
+            onRefresh={() => this.refresh()}
+          />
         </View>
       </View>
     );
